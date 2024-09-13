@@ -1,0 +1,182 @@
+Title: Source control, diff and merge LabView files with git
+Author: Alonso Andre Cifuentes Cuadros
+Date: 13/09/2024
+Version: 02
+
+# Prerequisites:
+# - git 
+# - github account
+# - LabVIEW
+# - sourcetree (recommended)
+# - Visual Studio Code (strongly recommended)
+
+# Download LVMerge.sh and LVCompare.sh and place them in
+# a stable directory (preferably one you won’t modify)
+# obs: Also available at the end of this document.
+cd "C:/Program Files/Git/bin"
+# or
+cd "C:/Users/<User>/lv_diff_merge
+
+# if sourcetree is installed
+# open sourcetree>Tools>Options>Diff>External Diff / Merge
+External Diff Tool = Custom
+Diff Command = <abs. dir to LVCompare.sh>
+Arguments = "$REMOTE" "$LOCAL"
+Merge Tool = Custom
+Merge Command = <abs. dir to LVMerge.sh>
+Arguments = "$BASE" "$REMOTE" "$LOCAL" "$MERGED"
+
+# if sourcetree is not installed (and wont be)
+# update .giconfig in user dir
+cd C:/Users/<User>
+notepad .gitconfig
+# append the following if not already present in the file:
+[diff]
+  tool = "sourcetree"
+[difftool "sourcetree"]
+    # example: 'C:/Users/ASUS/Documents/Repos/test-repo-1/custom_diffs/LVCompare.sh' $REMOTE $LOCAL
+	cmd = '<abs. dir to LVCompare.sh>' $REMOTE $LOCAL
+[merge]
+	tool = "sourcetree"
+[mergetool "sourcetree"]
+	#example: cmd = 'C:/Users/ASUS/Documents/Repos/test-repo-1/custom_diffs/LVMerge.sh' $BASE $REMOTE $LOCAL $MERGED
+    cmd = '<abs. dir to LVMerge.sh>' $BASE $REMOTE $LOCAL $MERGED
+    trustExitCode = true
+
+# once setup, you can verify the tools by using 
+$ git config --global mergetool.sourcetree.cmd
+# example response: 'C:/Users/proyecto/lv_merge_diff/LVMerge.sh' $BASE $REMOTE $LOCAL $MERGED
+$ git config --global difftool.sourcetree.cmd
+# example response: 'C:/Users/proyecto/lv_merge_diff/LVCompare.sh' $REMOTE $LOCAL
+
+# Initialize en empty repo at <your repo directory> with:
+# alternative 1: create a new local repo:
+git init
+# alternative 2: create a remote repo and sync with local copy
+< create repo in github >
+git init
+git branch -M main
+git remote add origin < empty github repo link >
+# alternative 3: push an existing local repo fromm the command line
+git remote add origin < github repo link >
+git branch -M main
+git push -u origin main
+# alternative 4: clone a github repo
+git clone < github repo link
+
+# Check the remote origin if linking to a remote repo
+$ git remote -v
+# example answer:
+# origin  https://github.com/GiBio-PUCP/test2.git (fetch)
+# origin  https://github.com/GiBio-PUCP/test2.git (push)
+
+# Create .gitignore file in the repo directory 
+# and ignore temporary / compile code
+touch .gitignore
+echo "*.lvlps" >> .gitignore
+echo "*.aliases" >> .gitignore
+echo "*.orig" >> .gitignore
+
+# LVMerge.sh usage with git bash
+# < perform edits in a secondary branch >
+# < switch to main branch > 
+git merge <secondary branch name>
+git mergetool
+git add .
+git commit -m ""
+git push <origin> <main> 
+Secondary Usage: ./LVMerge.sh <base_file> <remote_file> <local_file> <merged_file>
+
+# LVCompare.sh usage with git bash
+git difftool HEAD^ HEAD <file.vi>
+# Secondary Usage: ./LVCompare.sh <local_file> <remote_file>
+
+
+------------------------------------------------------------------------------------------------------
+# Annexes
+
+# Annex 1 - LVMerge.sh
+# !/bin/bash
+# LVMerge.sh - A script to assist in merging LabVIEW files using the LabVIEW Merge tool.
+# Author: Alonso Cifuentes
+# Date: 13/09/2024
+# Version: 2
+#
+# Description: This script takes four file arguments (base, remote, local, and merged versions)
+# and copies them to the current working directory as temporary files. It prepares them for merging 
+# by adjusting path formats and launching the LabVIEW Merge tool (LVMerge.exe). Once the merge 
+# is completed, the temporary files are removed.
+#
+# Usage (w/ git bash): 
+# < perform edits in a secondary branch >
+# < switch to main branch > 
+# git merge <secondary branch name>
+# git mergetool
+# git add .
+# git commit -m ""
+# git push <origin> <main> 
+# Secondary Usage: ./LVMerge.sh <base_file> <remote_file> <local_file> <merged_file>
+#---------------------------------------------------------------------------------------------------------
+# read -p "Press any key to start the comparison"
+echo $1 # Base
+echo $2 # Remote (theirs)
+echo $3 # Local (yours)
+echo $4 # Merged
+cp "$1" "$PWD/temp_${1##*/}"    # Moving and renaming the temp file
+cp "$2" "$PWD/temp_${2##*/}"    # Moving and renaming the temp file
+cp "$3" "$PWD/temp_${3##*/}"    # Moving and renaming the temp file
+tgt1=$PWD/temp_${1##*/}         # Setting up the correct value to the tgt1 parameter
+tgt2=$PWD/temp_${2##*/}         # Setting up the correct value to the tgt2 parameter
+tgt3=$PWD/temp_${3##*/}         # Setting up the correct value to the tgt3 parameter
+tgt4=$PWD/$4                    # Setting up the correct value to the tgt4 parameter
+# stream edit: (substitute) "/" with "\" (g)lobally (the whole string)
+# Extra c\ due to Git running in MINGW32, replace with C:\
+tgt1=$(echo ${tgt1} | sed 's/\//\\/g' | sed 's/\\c\\/C:\\/')
+tgt2=$(echo ${tgt2} | sed 's/\//\\/g' | sed 's/\\c\\/C:\\/')
+tgt3=$(echo ${tgt3} | sed 's/\//\\/g' | sed 's/\\c\\/C:\\/')
+tgt4=$(echo ${tgt4} | sed 's/\//\\/g' | sed 's/\\c\\/C:\\/')
+echo Launching LVMerge.exe With args:
+echo $tgt1
+echo $tgt2
+echo $tgt3
+echo $tgt4  # Names are friendly...
+# LVMerge command line
+"C:\Program Files (x86)\National Instruments\Shared\LabVIEW Merge\LVMerge.exe" "$tgt1" "$tgt2" "$tgt3" "$tgt4"
+rm -rf "$tgt1" "$tgt2" "$tgt3"  #removing unnecessary files
+
+# Annex 2 - LVCompare.sh
+#!/bin/bash
+# LVCompare.sh - A script for comparing two LabVIEW files using the LabVIEW Compare tool.
+# Author: Alonso Cifuentes
+# Date: 13/09/2024
+# Version: 2
+#
+# Description: This script calculates the absolute Windows-compatible paths for two 
+# given files (local and remote), converts the paths to the correct format for Windows, 
+# and executes LVCompare.exe to compare them. The -nobdpos and -nofppos options are 
+# used to ignore differences in block diagram positions and front panel positions.
+# The -W parameter on the pwd command is necessary to return the Windows version of the path.
+# Not using the -W parameter will result in a conversion of temp directory to a 'tmp' path meaningful only in the Linux environment.
+# Piping the result through tr '/' '' translates the forward slashes to backslashes.
+# Windows understands forward slashes, but LVCompare.exe does not.
+# 
+# Usage (w/ git bash): 
+# git difftool HEAD^ HEAD <file.vi>
+# Secondary Usage: ./LVCompare.sh <local_file> <remote_file>
+#---------------------------------------------------------------------------------------------------------
+abspath () {
+  DIR=$(dirname "$1")
+  FN=$(basename "$1")
+  cd "$DIR" || exit
+  printf "%s\\%s" "$(pwd -W)" "$FN" | tr '/' '\\'
+}
+lvcompare="C:/Program Files (x86)/National Instruments/Shared/LabVIEW Compare/LVCompare.exe"
+local=$(abspath "$1")
+remote=$(abspath "$2")
+# Output the paths for debugging purposes
+echo "Local: $local"
+echo "Remote: $remote"
+# Execute LVCompare with the correct 
+# "$lvcompare" -nobdpos -nofppos "$local" "$remote" # <- original
+"$lvcompare" "$local" "$remote" -nobdpos -nofppos
+
