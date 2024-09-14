@@ -18,11 +18,33 @@ This setup was created to enable and streamline the use of diff and merge functi
 
 ### 1. Download the Scripts
 
-Download the `LVMerge.sh` and `LVCompare.sh` scripts and place them in a stable directory (preferably one that won't be modified often).
+Download the `LVMerge.sh` and `LVCompare.sh` scripts and place them in a stable directory that will not be modified often. For example:
 
-Some examples:\
-"C:/Program Files/Git/bin"\
-"C:/Users/\<User\>/lv_diff_merge"
+- `C:/Program Files/Git/bin`
+- `C:/Users/<User>/lv_diff_merge`
+
+### 2. Modify the `LVCompare.sh` Script
+
+In `LVCompare.sh`, update the path to `LVCompare.exe`:
+
+- Go to line 26 and set the path to your installed `LVCompare.exe` (depending on your National Instruments installation path). Remember to use slashes ("/"). For example:
+  
+  ```bash
+  lvcompare="C:/Program Files (x86)/National Instruments/Shared/LabVIEW Compare/LVCompare.exe"
+  ```
+
+### 3. Modify the `LVMerge.sh` Script
+
+In `LVMerge.sh`, update the path to `LVMerge.exe`:
+
+- Go to line 46 and set the path to your installed `LVMerge.exe`. Remember to use slashes ("/"). For example:
+  
+  ```bash
+  "C:/Program Files (x86)/National Instruments/Shared/LabVIEW Merge/LVMerge.exe" "$tgt1" "$tgt2" "$tgt3" "$tgt4"
+  ```
+
+Make sure to update the paths according to your specific installation location if it differs from the default examples.
+
 
 ### 2. Configure Diff and Merge Tools in Sourcetree
 
