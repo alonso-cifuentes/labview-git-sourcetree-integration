@@ -87,12 +87,12 @@ If you are not using Sourcetree, update your Git configuration:
 3. Verify the tool configuration by running the following commands:
 
    ```bash
-   git config --global mergetool.sourcetree.cmd
+   git config --get --global mergetool.sourcetree.cmd
    ```
    example response: 'C:/Users/proyecto/lv_merge_diff/LVMerge.sh' $BASE $REMOTE $LOCAL $MERGED
 
    ```bash
-   git config --global difftool.sourcetree.cmd
+   git config --get --global difftool.sourcetree.cmd
    ```
    example response: 'C:/Users/proyecto/lv_merge_diff/LVCompare.sh' $REMOTE $LOCAL
    
